@@ -1,6 +1,6 @@
 Import-Module RemoteDesktop
 
-cd c:\cfn
+Set-Location c:\cfn
 
 $json = aws ssm get-parameter --name 'AD-JoinDomain-Variables' --output text --query 'Parameter.Value' | ConvertFrom-Json 
 $domain = $json.domain

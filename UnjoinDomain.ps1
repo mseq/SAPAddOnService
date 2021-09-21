@@ -3,7 +3,7 @@ $user = $json.user
 $passwd = $json.passwd
 $WkgName = $json.wkgName
 
-$rand = -join ((65..90) + (97..122) | Get-Random -Count 5 | % {[char]$_})
+$rand = -join ((65..90) + (97..122) | Get-Random -Count 5 | ForEach-Object {[char]$_})
 $CompName = "WinClient-"+$rand
 
 $joinCred = New-Object pscredential -ArgumentList ([pscustomobject]@{
