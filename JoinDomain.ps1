@@ -107,7 +107,8 @@ Foreach ($line in $cmdOutput) {
 
                 # Add AD to Server Manager
                 Write-Host "Adding $AdHostname to Server Manager"
-                Start-Process Powershell.exe -Credential $joinCred -ArgumentList "-Command .\AddServerToManager.ps1 $AdHostname"
+                Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 1 -Message "Adding $AdHostname to Server Manager"
+                Start-Process Powershell.exe -Credential $joinCred -ArgumentList "-Command & .\AddServerToManager.ps1 $AdHostname"
 
                 # Restart the computer
                 Restart-Computer
