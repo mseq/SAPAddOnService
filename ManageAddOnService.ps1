@@ -2,6 +2,12 @@
 $ips = @()
 $flagSmallerIp = $FALSE
 $flagFleetMachine = $FALSE
+$LogSource = "ManageAddOnService"
+
+# Create EventLog
+New-EventLog -LogName Application -Source $LogSource
+Write-Host "Starting $LogSource Script"
+Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 1 -Message "Starting $LogSource Script"
 
 $TargetGroupArn = aws elbv2 describe-target-groups --output text --query "TargetGroups[*].TargetGroupArn" | findstr WinClientELB
 if ($null -ne $TargetGroupArn) {
@@ -39,11 +45,33 @@ if ($null -ne $TargetGroupArn) {
 }
 
 if ($flagFleetMachine) {
-    # Write-Host "Faz parte do pool"
+    Write-Host "This host belongs to the AutoScalingGroup"
+    Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 2 -Message "This host belongs to the AutoScalingGroup"
+
+    # # Checks for the time to environment shutdown and change InstanceProtection
+    # $json = aws ssm get-parameter --name 'Environment-Schedule' --output text --query 'Parameter.Value' | ConvertFrom-Json 
+    # $wday = [Int] (Get-Date).DayOfWeek
+    # if ($wday -eq 0) {
+    #     $wday = 6
+    # } else {
+    #     $wday = $wday - 1
+    # }
+    # $time = [string](Get-Date).Hour + ":" + [string](Get-Date).Minute
+
+    # if ($json.weekdays[$wday].'stop-environment' -eq $time) {
+    #     Write-Host "Set TERMINATION PROTECTION OFF to instance $($instanceId), due to Environment Shutdown"
+    #     Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 4 -Message "Set TERMINATION PROTECTION ON to instance $($instanceId), due to Environment Shutdown"
+
+    #     aws autoscaling set-instance-protection --instance-ids $instanceId --auto-scaling-group-name $asg --no-protected-from-scale-in
+    #     shutdown /s
+    # }
+
     Start-Service -Name AmazonCloudWatchAgent
 
     if ($flagSmallerIp) {
-
+        Write-Host "Turning On the AddOn Services"
+        Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 3 -Message "Turning On the AddOn Services"
+    
         Start-Service -Name IntegrationBankApiRest
         Start-Service -Name IntegrationBankEnvioDeEmail
         Start-Service -Name IntegrationBankEnvioDeTemplateEmail
@@ -90,6 +118,8 @@ if ($flagFleetMachine) {
         Start-Service -Name TaxOneNfseReturnService
 
     } else {
+        Write-Host "Turning Off the AddOn Services"
+        Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 3 -Message "Turning Off the AddOn Services"
 
         Stop-Service -Name IntegrationBankApiRest
         Stop-Service -Name IntegrationBankEnvioDeEmail
@@ -137,6 +167,28 @@ if ($flagFleetMachine) {
         Stop-Service -Name TaxOneNfseReturnService
 
     }
+
+    # Handle TERMINATION PROTECTION
+    $cmdEng = (query user | Select-String -Pattern 'Active' -AllMatches).Length
+    $cmdPt = (query user | Select-String -Pattern 'Ativo' -AllMatches).Length
+
+    $res = [int]$cmdEng + [int]$cmdPt
+    $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT –Uri http://169.254.169.254/latest/api/token
+    $instanceId = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+    $asg = aws autoscaling describe-auto-scaling-groups --output text --query 'AutoScalingGroups[*].AutoScalingGroupName'
+
+    if ($res -ge 1) {
+        Write-Host "Set TERMINATION PROTECTION ON to instance $($instanceId)"
+        Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 4 -Message "Set TERMINATION PROTECTION ON to instance $($instanceId)"
+
+        aws autoscaling set-instance-protection --instance-ids $instanceId --auto-scaling-group-name $asg --protected-from-scale-in
+    } else {
+        Write-Host "Set TERMINATION PROTECTION OFF to instance $($instanceId)"
+        Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 4 -Message "Set TERMINATION PROTECTION ON to instance $($instanceId)"
+
+        aws autoscaling set-instance-protection --instance-ids $instanceId --auto-scaling-group-name $asg --no-protected-from-scale-in
+    }
+    
 } else {
     # Write-Host "Não faz parte do pool"
 }

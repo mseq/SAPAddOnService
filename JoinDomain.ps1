@@ -66,12 +66,17 @@ Foreach ($line in $cmdOutput) {
                 Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 1 -Message "Changing name from $currhostname to $newhostname and joining the Domain $domain"
                 Add-Computer -DomainName $domain -Credential $joinCred -NewName $newhostname -Restart -Force
 
+                shutdown /r
+
             } elseif ($res -like "STEP-02") {
 
                 if ($newhostname -ne $currhostname) {
                     Write-Host "Rename PC from $currhostname to $newhostname"
                     Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 1 -Message "No need to join domain"
                     Rename-Computer -DomainCredential $joinCred -NewName $newhostname -Restart -Force
+
+                    shutdown /r
+
                 } else {
 
                     Remove-Item "STATUSFILE" -Force
@@ -111,14 +116,23 @@ Foreach ($line in $cmdOutput) {
                 Start-Process Powershell.exe -Credential $joinCred -ArgumentList "-Command & .\AddServerToManager.ps1 $AdHostname"
 
                 # Restart the computer
-                Restart-Computer
+                shutdown /r
 
             } elseif ($res -like "DONE") {
 
                 # Start HealthCheck Service
-                Start-Process Powershell.exe -Credential $joinCred -ArgumentList "-Command & 'C:\Program Files\Python\Python39\python.exe' -m pip install boto3; & 'C:\Program Files\Python\Python39\python.exe' -m pip install ec2-metadata; & 'C:\Program Files\Python\Python39\python.exe' c:\cfn\ServerHealthCheck.py"
+                Write-Host "JoinDomain finished, starting HealthCheck script"
+                Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 1 -Message "JoinDomain finished, starting HealthCheck script"
+                Start-Process Powershell.exe -Credential $joinCred -ArgumentList "-Command & 'C:\Program Files\Python\Python39\python.exe' c:\cfn\ServerHealthCheck.py"
 
+                # # If DesiredCapacity is still 1, then adjust it to 2.
+                # $asg = aws autoscaling describe-auto-scaling-groups --output text --query 'AutoScalingGroups[*].AutoScalingGroupName'
+                # $res = aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names $asg --output text --query 'AutoScalingGroups[*].DesiredCapacity'
+                # if ($res -eq "1") {
+                #     aws autoscaling set-desired-capacity --auto-scaling-group-name $asg --desired-capacity 2                
+                # }
             }
         }
     }
 }
+
