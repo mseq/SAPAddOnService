@@ -117,6 +117,12 @@ if ($flagFleetMachine) {
         Start-Service -Name TaxOneNfseRetornoTxt
         Start-Service -Name TaxOneNfseReturnService
 
+        # B1IF Services
+        Start-Service -Name SAPB1iDIProxy
+        Start-Service -Name SAPB1iDIProxy_Monitor
+        Start-Service -Name SAPB1iEventSender
+        Start-Service -Name Tomcat8
+
     } else {
         Write-Host "Turning Off the AddOn Services"
         Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 3 -Message "Turning Off the AddOn Services"
@@ -166,6 +172,11 @@ if ($flagFleetMachine) {
         Stop-Service -Name TaxOneNfseRetornoTxt
         Stop-Service -Name TaxOneNfseReturnService
 
+        # B1IF Services
+        Stop-Service -Name SAPB1iDIProxy
+        Stop-Service -Name SAPB1iDIProxy_Monitor
+        Stop-Service -Name SAPB1iEventSender
+        Stop-Service -Name Tomcat8
     }
 
     # Handle TERMINATION PROTECTION
