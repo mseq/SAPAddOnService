@@ -15,6 +15,17 @@ $AdHostname = $json.AdHostname
 $bolDomain = (Get-WmiObject -Class Win32_ComputerSystem).PartOfDomain
 $LogSource = "JoinDomain"
 
+function CallADCommand ($AdIP, $ADPort, $Command) {
+    $tcpConnection = New-Object System.Net.Sockets.TcpClient($AdIP, $ADPort)
+    $tcpStream = $tcpConnection.GetStream()
+    $writer = New-Object System.IO.StreamWriter($tcpStream)
+    $writer.AutoFlush = $true
+
+    # Call the RDS Configuration
+    $writer.WriteLine($Command)
+    $writer.Close()
+}
+
 #Create EventLog
 New-EventLog -LogName Application -Source $LogSource
 
@@ -56,9 +67,9 @@ Foreach ($line in $cmdOutput) {
                 
             $newhostname = $ip.replace('.', '-')
             $res = Get-Content -Path .\STATUSFILE -TotalCount 1
+            CallADCommand $AdIP $ADPort $res
 
             if ($res -like "STEP-01") {
-
                 Remove-Item "STATUSFILE" -Force
                 New-Item -Path . -Name "STATUSFILE" -ItemType "file" -Value "STEP-02"
 
@@ -95,14 +106,16 @@ Foreach ($line in $cmdOutput) {
 
                     # Prepare TCP Connection to AD
                     # $AdIP = "127.0.0.1"
-                    $tcpConnection = New-Object System.Net.Sockets.TcpClient($AdIP, 4489)
-                    $tcpStream = $tcpConnection.GetStream()
-                    $writer = New-Object System.IO.StreamWriter($tcpStream)
-                    $writer.AutoFlush = $true
+                    # $tcpConnection = New-Object System.Net.Sockets.TcpClient($AdIP, 4489)
+                    # $tcpStream = $tcpConnection.GetStream()
+                    # $writer = New-Object System.IO.StreamWriter($tcpStream)
+                    # $writer.AutoFlush = $true
 
-                    # Call the RDS Configuration
-                    $writer.WriteLine("RDS-CONFIG")
-                    $writer.Close()
+                    # # Call the RDS Configuration
+                    # $writer.WriteLine("RDS-CONFIG")
+                    # $writer.Close()
+
+                    CallADCommand $AdIP $ADPort "RDS-CONFIG"
                 }
                 
             } elseif ($res -like "STEP-03") {

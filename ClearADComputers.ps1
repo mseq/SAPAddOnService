@@ -42,5 +42,5 @@ while ($true) {
 
     Write-Host "Sleeping the loop"
     Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 2 -Message "Sleeping the loop"
-    Start-Sleep -Seconds 900
+    Start-Sleep -Seconds 1800
 }
