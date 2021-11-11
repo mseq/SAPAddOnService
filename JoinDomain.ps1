@@ -48,12 +48,18 @@ Foreach ($line in $cmdOutput) {
             Write-Host "Equivalente"
             if ($bolDomain -eq "True") {
                 Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 1 -Message "Unjoining domain, and recovering the machine hostname"
-                Remove-Computer -UnjoinDomainCredential $joinCred -WorkgroupName $WkgName -PassThru -Verbose -Restart -Force
+                Remove-Computer -UnjoinDomainCredential $joinCred -WorkgroupName $WkgName -PassThru -Verbose
+
+                shutdown /r /t 5
+
             } else {
                 Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 1 -Message "No need to unjoin domain"
                 if ($currhostname -ne $WinClientName) {
                     Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 1 -Message "Renaming host"
-                    Rename-Computer -NewName $WinClientName -Restart -Force
+                    Rename-Computer -NewName $WinClientName
+
+                    shutdown /r /t 5
+
                 }
             }
         } else {
@@ -76,18 +82,18 @@ Foreach ($line in $cmdOutput) {
 
                 Write-Host "Changing name from $currhostname to $newhostname and joining the Domain $domain"
                 Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 1 -Message "Changing name from $currhostname to $newhostname and joining the Domain $domain"
-                Add-Computer -DomainName $domain -Credential $joinCred -NewName $newhostname -Restart -Force
+                Add-Computer -DomainName $domain -Credential $joinCred -NewName $newhostname
 
-                shutdown /r
+                shutdown /r /t 5
 
             } elseif ($res -like "STEP-02") {
 
                 if ($newhostname -ne $currhostname) {
                     Write-Host "Rename PC from $currhostname to $newhostname"
                     Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 1 -Message "No need to join domain"
-                    Rename-Computer -DomainCredential $joinCred -NewName $newhostname -Restart -Force
+                    Rename-Computer -DomainCredential $joinCred -NewName $newhostname
 
-                    shutdown /r
+                    shutdown /r /t 5
 
                 } else {
 
@@ -130,7 +136,7 @@ Foreach ($line in $cmdOutput) {
                 Start-Process Powershell.exe -Credential $joinCred -ArgumentList "-Command & .\AddServerToManager.ps1 $AdHostname"
 
                 # Restart the computer
-                shutdown /r
+                shutdown /r /t 120suth
 
             } elseif ($res -like "DONE") {
 
@@ -138,6 +144,8 @@ Foreach ($line in $cmdOutput) {
                 Write-Host "JoinDomain finished, starting HealthCheck script"
                 Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 1 -Message "JoinDomain finished, starting HealthCheck script"
                 Start-Process Powershell.exe -Credential $joinCred -ArgumentList "-Command & 'C:\Program Files\Python\Python39\python.exe' c:\cfn\ServerHealthCheck.py"
+
+                CallADCommand $AdIP $ADPort "JoinDomain FINISHED"
 
                 # # If DesiredCapacity is still 1, then adjust it to 2.
                 # $asg = aws autoscaling describe-auto-scaling-groups --output text --query 'AutoScalingGroups[*].AutoScalingGroupName'
