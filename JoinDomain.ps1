@@ -11,18 +11,19 @@ $WinClientName = $json.winClientName
 $WinClientIP = $json.winClientIP
 $WkgName = $json.wkgName
 $AdIP = $json.AdIP
+$AdPort = $json.AdPort
 $AdHostname = $json.AdHostname
 $bolDomain = (Get-WmiObject -Class Win32_ComputerSystem).PartOfDomain
 $LogSource = "JoinDomain"
 
-function CallADCommand ($AdIP, $ADPort, $Command) {
-    $tcpConnection = New-Object System.Net.Sockets.TcpClient($AdIP, $ADPort)
+function CallADCommand ($ip, $port, $cmd) {
+    $tcpConnection = New-Object System.Net.Sockets.TcpClient($ip, $port)
     $tcpStream = $tcpConnection.GetStream()
     $writer = New-Object System.IO.StreamWriter($tcpStream)
     $writer.AutoFlush = $true
 
     # Call the RDS Configuration
-    $writer.WriteLine($Command)
+    $writer.WriteLine($cmd)
     $writer.Close()
 }
 
