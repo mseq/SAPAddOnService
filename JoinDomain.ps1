@@ -136,7 +136,7 @@ Foreach ($line in $cmdOutput) {
                 Start-Process Powershell.exe -Credential $joinCred -ArgumentList "-Command & .\AddServerToManager.ps1 $AdHostname"
 
                 # Restart the computer
-                shutdown /r /t 120
+                shutdown /r /t 30
 
             } elseif ($res -like "DONE") {
 
