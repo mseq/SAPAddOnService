@@ -40,6 +40,7 @@ if ($Null -ne $servername) {
     start-process –filepath $env:SystemRoot\System32\ServerManager.exe –WindowStyle Maximized
 
     # Step 10: Set the LicenseServer
+    Add-RDServer -Server $servername -Role RDS-LICENSING
     Set-RDLicenseConfiguration -LicenseServer $servername -Mode PerUser -Force
 
 } else {
