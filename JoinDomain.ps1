@@ -111,17 +111,6 @@ Foreach ($line in $cmdOutput) {
                     Install-WindowsFeature Remote-Desktop-Services
                     Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 1 -Message "Instalando RDS"
 
-                    # Prepare TCP Connection to AD
-                    # $AdIP = "127.0.0.1"
-                    # $tcpConnection = New-Object System.Net.Sockets.TcpClient($AdIP, 4489)
-                    # $tcpStream = $tcpConnection.GetStream()
-                    # $writer = New-Object System.IO.StreamWriter($tcpStream)
-                    # $writer.AutoFlush = $true
-
-                    # # Call the RDS Configuration
-                    # $writer.WriteLine("RDS-CONFIG")
-                    # $writer.Close()
-
                     CallADCommand $AdIP $ADPort "RDS-CONFIG"
                 }
                 
@@ -147,12 +136,6 @@ Foreach ($line in $cmdOutput) {
 
                 CallADCommand $AdIP $ADPort "JoinDomain FINISHED"
 
-                # # If DesiredCapacity is still 1, then adjust it to 2.
-                # $asg = aws autoscaling describe-auto-scaling-groups --output text --query 'AutoScalingGroups[*].AutoScalingGroupName'
-                # $res = aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names $asg --output text --query 'AutoScalingGroups[*].DesiredCapacity'
-                # if ($res -eq "1") {
-                #     aws autoscaling set-desired-capacity --auto-scaling-group-name $asg --desired-capacity 2                
-                # }
             }
         }
     }

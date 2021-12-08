@@ -30,6 +30,9 @@ sock.bind(server_address)
 # Listen for incoming connections
 sock.listen(1)
 
+bolFirstDeploy=True
+ConnectionBroker="WIN-D93JRF7S9BL.SAP.VALTELLINA.CORP"
+
 while True:
     # Wait for a connection
     logger.info ('waiting for a connection')
@@ -40,22 +43,36 @@ while True:
 
         # Receive the data in small chunks and retransmit it
         while True:
-            data = connection.recv(128)
-            logger.info (f'received "{str(data)}"')
+            data = connection.recv(128).decode("utf-8").strip()
+           
+            logger.info (f'received "{data}"')
             if data:
-                if str(data).find("RDS-CONFIG") >= 0:
-                    hostname = str(client_address[0]).replace(".", "-") + ".sap.valtellina.corp"
-                    logger.info (f'Protocol ok - {str(data)}')
+                hostname = str(client_address[0]).replace(".", "-") + ".sap.valtellina.corp"
+                if data.find("RDS-CONFIG") >= 0:
+                    logger.info (f'Protocol ok - {data}')
                     logger.info (f'Starting RDS Configuration on server: {hostname}')
 
                     res = run(f"c:\cfn\AddServerToManager.ps1 {hostname}")
-                    res = run(f"New-RDSessionDeployment -ConnectionBroker {hostname} -WebAccessServer {hostname} -SessionHost {hostname}")
+                    res = run("Import-Module RemoteDesktop; $res = Get-RDServer | Measure-Object -line; echo $res.Lines")
+
+                    if int(res.stdout.decode("utf-8")) >= 2:
+                        res = run(f"Import-Module RemoteDesktop; Add-RDServer -Server {hostname} -Role RDS-RD-SERVER -ConnectionBroker {ConnectionBroker}")
+                    else:
+                        res = run(f"Import-Module RemoteDesktop; New-RDSessionDeployment -ConnectionBroker {ConnectionBroker} -WebAccessServer {hostname} -SessionHost {hostname}")
+
+                elif data.find("FINISHED") >= 0:
+                    logger.info (f'Protocol ok - {data}')
+                    logger.info (f'Starting RDS Configuration on server: {hostname}')
+
+                    res = run(f"Import-Module RemoteDesktop; Add-RDServer -Server {hostname} -Role RDS-WEB-ACCESS -ConnectionBroker {ConnectionBroker}")
+
                 else:
-                    logger.info (f'Not ok... Ignore - {str(data)}')
+                    logger.info (f'Not a command - {data}')
             else :
                 logger.info ('End of data')
                 break
-            
+    except Exception as e:
+        logger.error (e)
     finally:
         # Clean up the connection
         connection.close()

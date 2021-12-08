@@ -1,4 +1,5 @@
 Import-Module ActiveDirectory
+Import-Module RemoteDesktop
 
 Set-Location c:\cfn
 
@@ -33,6 +34,8 @@ while ($true) {
         if ($bol -like "False") {
             Write-Host "Removing $($Computer.Name) from AD"
             Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 3 -Message "Removing $($Computer.Name) from AD"
+            Remove-RDServer -Server "$($Computer.DNSHostName)" -Role RDS-WEB-ACCESS -Force
+            Remove-RDServer -Server "$($Computer.DNSHostName)" -Role RDS-RD-SERVER -Force
             Remove-ADComputer -Identity "$($Computer.Name)" -Confirm:$false
         } else {
             Write-Host "Keeping $($Computer.Name) from AD"
@@ -42,5 +45,5 @@ while ($true) {
 
     Write-Host "Sleeping the loop"
     Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 2 -Message "Sleeping the loop"
-    Start-Sleep -Seconds 1800
+    Start-Sleep -Seconds 300
 }
