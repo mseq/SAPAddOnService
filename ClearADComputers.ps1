@@ -9,6 +9,10 @@ $user = $json.user
 $passwd = $json.passwd
 $LogSource = "ClearADComputers"
 
+$server = "\\.\pipe\MICROSOFT##WID\tsql\query"
+$db = "RDCms"
+
+
 # Create EventLog
 New-EventLog -LogName Application -Source $LogSource
 Write-Host "Starting ClearADComputers Script"
@@ -34,8 +38,22 @@ while ($true) {
         if ($bol -like "False") {
             Write-Host "Removing $($Computer.Name) from AD"
             Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 3 -Message "Removing $($Computer.Name) from AD"
+
+            # Clear using the cmdlet
             Remove-RDServer -Server "$($Computer.DNSHostName)" -Role RDS-WEB-ACCESS -Force
             Remove-RDServer -Server "$($Computer.DNSHostName)" -Role RDS-RD-SERVER -Force
+
+            # If any fail removal, hard remove them on the DB
+            $sql = " DELETE FROM RDS.RoleRdwa WHERE ServerId = (SELECT ID FROM [RDCms].[rds].[Server] WHERE Upper(Name) = Upper('$($Computer.DNSHostName)')) "
+            Invoke-Sqlcmd -ServerInstance $server -Database $db -Query $sql
+
+            $sql = " DELETE FROM RDS.RoleRdsh WHERE ServerId = (SELECT ID FROM [RDCms].[rds].[Server] WHERE Upper(Name) = Upper('$($Computer.DNSHostName)')) "
+            Invoke-Sqlcmd -ServerInstance $server -Database $db -Query $sql
+
+            $sql = " DELETE FROM RDS.SERVER WHERE Upper(Name) = Upper('$($Computer.DNSHostName)') "
+            Invoke-Sqlcmd -ServerInstance $server -Database $db -Query $sql
+
+            # And finaly remove from AD
             Remove-ADComputer -Identity "$($Computer.Name)" -Confirm:$false
         } else {
             Write-Host "Keeping $($Computer.Name) from AD"

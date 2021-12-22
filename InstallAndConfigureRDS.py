@@ -62,9 +62,13 @@ while True:
 
                 elif data.find("FINISHED") >= 0:
                     logger.info (f'Protocol ok - {data}')
-                    logger.info (f'Starting RDS Configuration on server: {hostname}')
 
-                    res = run(f"Import-Module RemoteDesktop; Add-RDServer -Server {hostname} -Role RDS-WEB-ACCESS -ConnectionBroker {ConnectionBroker}")
+                    res = run(f"Import-Module RemoteDesktop; Get-RDServer | findstr /I {hostname}")
+
+                    if res.stdout.decode("utf-8").find("RDS-WEB-ACCESS") < 0:
+                        res = run(f"Import-Module RemoteDesktop; Add-RDServer -Server {hostname} -Role RDS-WEB-ACCESS -ConnectionBroker {ConnectionBroker}")
+                        
+                    logger.info (f'Bootstrap finished on host: {hostname}')
 
                 else:
                     logger.info (f'Not a command - {data}')

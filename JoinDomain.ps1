@@ -98,7 +98,8 @@ Foreach ($line in $cmdOutput) {
                 } else {
 
                     Remove-Item "STATUSFILE" -Force
-                    New-Item -Path . -Name "STATUSFILE" -ItemType "file" -Value "STEP-03"
+                    # New-Item -Path . -Name "STATUSFILE" -ItemType "file" -Value "STEP-03"
+                    New-Item -Path . -Name "STATUSFILE" -ItemType "file" -Value "DONE"
 
                     # Allow "SAP\SAP Users Group" to RDP to the server
                     net localgroup "Remote Desktop Users" /add "SAP\SAP Users Group"
@@ -114,18 +115,18 @@ Foreach ($line in $cmdOutput) {
                     CallADCommand $AdIP $ADPort "RDS-CONFIG"
                 }
                 
-            } elseif ($res -like "STEP-03") {
+            # } elseif ($res -like "STEP-03") {
 
-                Remove-Item "STATUSFILE" -Force
-                New-Item -Path . -Name "STATUSFILE" -ItemType "file" -Value "DONE"
+            #     Remove-Item "STATUSFILE" -Force
+            #     New-Item -Path . -Name "STATUSFILE" -ItemType "file" -Value "DONE"
 
-                # Add AD to Server Manager
-                Write-Host "Adding $AdHostname to Server Manager"
-                Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 1 -Message "Adding $AdHostname to Server Manager"
-                Start-Process Powershell.exe -Credential $joinCred -ArgumentList "-Command & .\AddServerToManager.ps1 $AdHostname"
+            #     # Add AD to Server Manager
+            #     Write-Host "Adding $AdHostname to Server Manager"
+            #     Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 1 -Message "Adding $AdHostname to Server Manager"
+            #     Start-Process Powershell.exe -Credential $joinCred -ArgumentList "-Command & .\AddServerToManager.ps1 $AdHostname"
 
-                # Restart the computer
-                shutdown /r /t 30
+            #     # Restart the computer
+            #     shutdown /r /t 30
 
             } elseif ($res -like "DONE") {
 
