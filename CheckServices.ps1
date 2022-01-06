@@ -18,6 +18,7 @@ Get-Service -Name BankPlusServiceMonitor
 
 # B1IF Servvices
 Write-Host "These must be running on main machine"
+Get-Service -Name SAPB1iDIProxy
 Get-Service -Name SAPB1iDIProxy_Monitor
 Get-Service -Name SAPB1iEventSender
 Get-Service -Name Tomcat8
