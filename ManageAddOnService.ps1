@@ -9,7 +9,14 @@ New-EventLog -LogName Application -Source $LogSource
 Write-Host "Starting $LogSource Script"
 Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 1 -Message "Starting $LogSource Script"
 
-$TargetGroupArn = aws elbv2 describe-target-groups --output text --query "TargetGroups[*].TargetGroupArn" | findstr WinClientELB
+$res = aws elbv2 describe-target-groups --output text --query "TargetGroups[*].TargetGroupArn"
+Foreach ($arn in $res.Split("	")) {
+    if($arn.Contains("WinClientELB")) {
+        $TargetGroupArn = $arn
+    }
+}
+
+Write-Host "TargetGroupArn: " $TargetGroupArn
 if ($null -ne $TargetGroupArn) {
     [array] $targets = aws elbv2 describe-target-health --target-group-arn $TargetGroupArn --output text --query "TargetHealthDescriptions[*].[Target.Id, TargetHealth.State]" | findstr healthy
     Foreach ($line in $targets) {
@@ -68,6 +75,12 @@ if ($flagFleetMachine) {
 
     Start-Service -Name AmazonCloudWatchAgent
 
+    # B1IF Services
+    Start-Service -Name SAPB1iDIProxy
+    Start-Service -Name SAPB1iDIProxy_Monitor
+    Start-Service -Name SAPB1iEventSender
+    Start-Service -Name Tomcat8
+
     if ($flagSmallerIp) {
         Write-Host "Turning On the AddOn Services"
         Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 3 -Message "Turning On the AddOn Services"
@@ -118,10 +131,10 @@ if ($flagFleetMachine) {
         Start-Service -Name TaxOneNfseReturnService
 
         # B1IF Services
-        Start-Service -Name SAPB1iDIProxy
-        Start-Service -Name SAPB1iDIProxy_Monitor
-        Start-Service -Name SAPB1iEventSender
-        Start-Service -Name Tomcat8
+        # Start-Service -Name SAPB1iDIProxy
+        # Start-Service -Name SAPB1iDIProxy_Monitor
+        # Start-Service -Name SAPB1iEventSender
+        # Start-Service -Name Tomcat8
 
     } else {
         Write-Host "Turning Off the AddOn Services"
@@ -173,10 +186,10 @@ if ($flagFleetMachine) {
         Stop-Service -Name TaxOneNfseReturnService
 
         # B1IF Services
-        Stop-Service -Name SAPB1iDIProxy
-        Stop-Service -Name SAPB1iDIProxy_Monitor
-        Stop-Service -Name SAPB1iEventSender
-        Stop-Service -Name Tomcat8
+        #Stop-Service -Name SAPB1iDIProxy
+        #Stop-Service -Name SAPB1iDIProxy_Monitor
+        #Stop-Service -Name SAPB1iEventSender
+        #Stop-Service -Name Tomcat8
     }
 
     # Handle TERMINATION PROTECTION
