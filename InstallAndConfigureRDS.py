@@ -57,8 +57,12 @@ while True:
 
                     if int(res.stdout.decode("utf-8")) >= 2:
                         res = run(f"Import-Module RemoteDesktop; Add-RDServer -Server {hostname} -Role RDS-RD-SERVER -ConnectionBroker {ConnectionBroker}")
+                        logger.info(f"STDOUT: {res.stdout.decode('utf-8')}")
+                        logger.info(f"STDERR: {res.stderr.decode('utf-8')}")
                     else:
                         res = run(f"Import-Module RemoteDesktop; New-RDSessionDeployment -ConnectionBroker {ConnectionBroker} -WebAccessServer {hostname} -SessionHost {hostname}")
+                        logger.info(f"STDOUT: {res.stdout.decode('utf-8')}")
+                        logger.info(f"STDERR: {res.stderr.decode('utf-8')}")
 
                 elif data.find("FINISHED") >= 0:
                     logger.info (f'Protocol ok - {data}')
@@ -80,4 +84,3 @@ while True:
     finally:
         # Clean up the connection
         connection.close()
-
