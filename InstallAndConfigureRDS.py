@@ -1,11 +1,13 @@
 import subprocess
 import logging
 import socket
-import sys
+# import sys
 
 def run(cmd):
-    logger.info (f'Starting RD Session Deployment - {cmd}')
+    logger.info (f'CmdRun - {cmd}')
     completed = subprocess.run(["powershell", "-Command", cmd], capture_output=True)
+    logger.info(f"STDOUT: {completed.stdout.decode('utf-8')}")
+    logger.info(f"STDERR: {completed.stderr.decode('utf-8')}")
     return completed        
 
 # create logger
@@ -57,12 +59,8 @@ while True:
 
                     if int(res.stdout.decode("utf-8")) >= 2:
                         res = run(f"Import-Module RemoteDesktop; Add-RDServer -Server {hostname} -Role RDS-RD-SERVER -ConnectionBroker {ConnectionBroker}")
-                        logger.info(f"STDOUT: {res.stdout.decode('utf-8')}")
-                        logger.info(f"STDERR: {res.stderr.decode('utf-8')}")
                     else:
                         res = run(f"Import-Module RemoteDesktop; New-RDSessionDeployment -ConnectionBroker {ConnectionBroker} -WebAccessServer {hostname} -SessionHost {hostname}")
-                        logger.info(f"STDOUT: {res.stdout.decode('utf-8')}")
-                        logger.info(f"STDERR: {res.stderr.decode('utf-8')}")
 
                 elif data.find("FINISHED") >= 0:
                     logger.info (f'Protocol ok - {data}')
@@ -84,3 +82,4 @@ while True:
     finally:
         # Clean up the connection
         connection.close()
+
