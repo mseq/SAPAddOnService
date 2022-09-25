@@ -12,7 +12,7 @@ $WinClientIP = $json.winClientIP
 $WkgName = $json.wkgName
 $AdIP = $json.AdIP
 $AdPort = $json.AdPort
-$AdHostname = $json.AdHostname
+# $AdHostname = $json.AdHostname
 $bolDomain = (Get-WmiObject -Class Win32_ComputerSystem).PartOfDomain
 $LogSource = "JoinDomain"
 
