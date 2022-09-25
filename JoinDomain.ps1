@@ -50,7 +50,7 @@ Foreach ($line in $cmdOutput) {
                 Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 1 -Message "Unjoining domain, and recovering the machine hostname"
                 Remove-Computer -UnjoinDomainCredential $joinCred -WorkgroupName $WkgName -PassThru -Verbose
 
-                shutdown /r /t 5
+                shutdown /r /t 2
 
             } else {
                 Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 1 -Message "No need to unjoin domain"
@@ -58,7 +58,7 @@ Foreach ($line in $cmdOutput) {
                     Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 1 -Message "Renaming host"
                     Rename-Computer -NewName $WinClientName
 
-                    shutdown /r /t 5
+                    shutdown /r /t 2
 
                 }
             }
@@ -84,7 +84,7 @@ Foreach ($line in $cmdOutput) {
                 Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 1 -Message "Changing name from $currhostname to $newhostname and joining the Domain $domain"
                 Add-Computer -DomainName $domain -Credential $joinCred -NewName $newhostname
 
-                shutdown /r /t 5
+                shutdown /r /t 2
 
             } elseif ($res -like "STEP-02") {
 
@@ -93,7 +93,7 @@ Foreach ($line in $cmdOutput) {
                     Write-EventLog -LogName Application -Source $LogSource -EntryType Information -EventId 1 -Message "No need to join domain"
                     Rename-Computer -DomainCredential $joinCred -NewName $newhostname
 
-                    shutdown /r /t 5
+                    shutdown /r /t 2
 
                 } else {
 
