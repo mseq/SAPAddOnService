@@ -6,8 +6,12 @@ import socket
 def run(cmd):
     logger.info (f'CmdRun - {cmd}')
     completed = subprocess.run(["powershell", "-Command", cmd], capture_output=True)
-    logger.info(f"STDOUT: {completed.stdout.decode('utf-8')}")
-    logger.info(f"STDERR: {completed.stderr.decode('utf-8')}")
+    try:
+        logger.info(f"STDOUT: {completed.stdout.decode('utf-8')}")
+        logger.info(f"STDERR: {completed.stderr.decode('utf-8')}")
+    except Exception as e:
+        logger.error(e)
+        
     return completed        
 
 # create logger
